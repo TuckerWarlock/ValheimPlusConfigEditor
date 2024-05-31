@@ -39,27 +39,40 @@ namespace ValheimConfigEditor
         {
             foreach (var section in configParser.ConfigSections)
             {
+                var sectionGrid = new Grid
+                {
+                    Margin = new Thickness(10, 10, 10, 0)
+                };
+                sectionGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Auto) });
+                sectionGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Auto) });
+                sectionGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+
                 var sectionLabel = new TextBlock
                 {
                     Text = section.Key,
                     FontSize = 16,
-                    Margin = new Thickness(10)
+                    Margin = new Thickness(0, 0, 0, 5),
+                    VerticalAlignment = VerticalAlignment.Center
                 };
-                MainStackPanel.Children.Add(sectionLabel);
+                Grid.SetColumn(sectionLabel, 0);
+                sectionGrid.Children.Add(sectionLabel);
 
                 var sectionCheckBox = new CheckBox
                 {
-                    Content = "Enable " + section.Key,
-                    Margin = new Thickness(10),
-                    IsChecked = section.Value.ContainsKey("enabled") && section.Value["enabled"].ToLower() == "true"
+                    Margin = new Thickness(5, 0, 0, 5),
+                    IsChecked = section.Value.ContainsKey("enabled") && section.Value["enabled"].ToLower() == "true",
+                    VerticalAlignment = VerticalAlignment.Center
                 };
                 sectionCheckBox.Checked += (sender, args) => SectionEnabled_Checked(section.Key);
                 sectionCheckBox.Unchecked += (sender, args) => SectionEnabled_Unchecked(section.Key);
-                MainStackPanel.Children.Add(sectionCheckBox);
+                Grid.SetColumn(sectionCheckBox, 1);
+                sectionGrid.Children.Add(sectionCheckBox);
+
+                MainStackPanel.Children.Add(sectionGrid);
 
                 var sectionStackPanel = new StackPanel
                 {
-                    Margin = new Thickness(20),
+                    Margin = new Thickness(20, 5, 0, 10),
                     Visibility = sectionCheckBox.IsChecked == true ? Visibility.Visible : Visibility.Collapsed,
                     Name = section.Key.Replace(" ", "") + "Settings"
                 };
@@ -78,113 +91,51 @@ namespace ValheimConfigEditor
 
         private FrameworkElement CreateSettingControl(string sectionKey, string key, string value)
         {
+            var grid = new Grid
+            {
+                Margin = new Thickness(5, 2, 5, 2)
+            };
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Auto) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+
+            var label = new TextBlock
+            {
+                Text = key,
+                VerticalAlignment = VerticalAlignment.Center
+            };
+            Grid.SetColumn(label, 0);
+
             if (value.ToLower() == "true" || value.ToLower() == "false")
             {
                 var checkBox = new CheckBox
                 {
-                    Content = key,
-                    Margin = new Thickness(10),
-                    IsChecked = value.ToLower() == "true"
-                };
-
-                // Check for dependencies
-                if (key == "enableAreaRepair")
-                {
-                    checkBox.Checked += (sender, args) => ToggleAreaRepairRadiusVisibility(sectionKey, true);
-                    checkBox.Unchecked += (sender, args) => ToggleAreaRepairRadiusVisibility(sectionKey, false);
-                }
-
-                return checkBox;
-            }
-            else if (Regex.IsMatch(value, @"^-?\d+(\.\d+)?$"))
-            {
-                var grid = new Grid
-                {
-                    Margin = new Thickness(10)
-                };
-                grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Auto) });
-                grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-
-                var label = new TextBlock
-                {
-                    Text = key,
+                    IsChecked = value.ToLower() == "true",
                     VerticalAlignment = VerticalAlignment.Center
                 };
-                Grid.SetColumn(label, 0);
-
+                Grid.SetColumn(checkBox, 1);
+                grid.Children.Add(label);
+                grid.Children.Add(checkBox);
+            }
+            else
+            {
                 var textBox = new TextBox
                 {
                     Text = value,
-                    Width = 100,
-                    Margin = new Thickness(10, 0, 0, 0),
+                    Width = 60,  // Adjusted width for text boxes
+                    Margin = new Thickness(5, 0, 0, 0),
                     HorizontalAlignment = HorizontalAlignment.Left
                 };
                 Grid.SetColumn(textBox, 1);
-
-                var dottedLine = new TextBlock
-                {
-                    Text = new string('.', 30),
-                    Foreground = new SolidColorBrush(Colors.LightGray),
-                    VerticalAlignment = VerticalAlignment.Center,
-                    Margin = new Thickness(5, 0, 5, 0)
-                };
-                Grid.SetColumn(dottedLine, 1);
-
                 grid.Children.Add(label);
-                grid.Children.Add(dottedLine);
                 grid.Children.Add(textBox);
 
-                if (key == "areaRepairRadius" && !IsParentChecked(sectionKey, "enableAreaRepair"))
+                /*if (key == "areaRepairRadius" && !IsParentChecked(sectionKey, "enableAreaRepair"))
                 {
                     grid.Visibility = Visibility.Collapsed;
-                }
-                return grid;
+                }*/
             }
-            else if (Regex.IsMatch(value, @"^[a-zA-Z0-9]+$"))
-            {
-                var grid = new Grid
-                {
-                    Margin = new Thickness(10)
-                };
-                grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Auto) });
-                grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
 
-                var label = new TextBlock
-                {
-                    Text = key,
-                    VerticalAlignment = VerticalAlignment.Center
-                };
-                Grid.SetColumn(label, 0);
-
-                var textBox = new TextBox
-                {
-                    Text = value,
-                    Width = 100,
-                    Margin = new Thickness(10, 0, 0, 0),
-                    HorizontalAlignment = HorizontalAlignment.Left
-                };
-                Grid.SetColumn(textBox, 1);
-
-                var dottedLine = new TextBlock
-                {
-                    Text = new string('.', 30),
-                    Foreground = new SolidColorBrush(Colors.LightGray),
-                    VerticalAlignment = VerticalAlignment.Center,
-                    Margin = new Thickness(5, 0, 5, 0)
-                };
-                Grid.SetColumn(dottedLine, 1);
-
-                grid.Children.Add(label);
-                grid.Children.Add(dottedLine);
-                grid.Children.Add(textBox);
-
-                return grid;
-            }
-            return new TextBlock
-            {
-                Text = $"{key} = {value}",
-                Margin = new Thickness(10)
-            };
+            return grid;
         }
 
         private bool IsParentChecked(string sectionKey, string parentKey)
@@ -202,25 +153,6 @@ namespace ValheimConfigEditor
                 return parentCheckBox?.IsChecked ?? false;
             }
             return false;
-        }
-
-        private void ToggleAreaRepairRadiusVisibility(string sectionKey, bool isVisible)
-        {
-            var sectionStackPanel = (StackPanel)MainStackPanel.Children
-                .OfType<StackPanel>()
-                .FirstOrDefault(sp => sp.Name == sectionKey.Replace(" ", "") + "Settings");
-
-            if (sectionStackPanel != null)
-            {
-                var panel = sectionStackPanel.Children
-                    .OfType<Grid>()
-                    .FirstOrDefault(g => g.Name == "areaRepairRadiusPanel");
-
-                if (panel != null)
-                {
-                    panel.Visibility = isVisible ? Visibility.Visible : Visibility.Collapsed;
-                }
-            }
         }
 
         private void SectionEnabled_Checked(string sectionKey)

@@ -21,15 +21,19 @@ namespace ValheimConfigEditor
             string currentSection = null;
             foreach (var line in File.ReadAllLines(filePath))
             {
-                if (line.StartsWith("[") && line.EndsWith("]"))
+                var trimmedLine = line.Trim();
+                if (trimmedLine.StartsWith(";") || string.IsNullOrWhiteSpace(trimmedLine))
+                    continue;
+
+                if (trimmedLine.StartsWith("[") && trimmedLine.EndsWith("]"))
                 {
-                    currentSection = line.Trim('[', ']');
+                    currentSection = trimmedLine.Trim('[', ']');
                     if (!ConfigSections.ContainsKey(currentSection))
                         ConfigSections[currentSection] = new Dictionary<string, string>();
                 }
-                else if (line.Contains("=") && currentSection != null)
+                else if (trimmedLine.Contains("=") && currentSection != null)
                 {
-                    var parts = line.Split('=');
+                    var parts = trimmedLine.Split('=');
                     if (parts.Length == 2)
                     {
                         ConfigSections[currentSection][parts[0].Trim()] = parts[1].Trim();
